@@ -1,0 +1,28 @@
+{
+  "id": "stale-needs-update",
+  "description": "When graphify-out/needs_update exists, the agent should still inspect the graph first but warn that graphify update is needed before relying on modified areas.",
+  "prompt": "Is the graph safe to rely on for recent code changes? You must use at least one tool, mention the first artifact you inspected, and include the exact update command if an update is needed.",
+  "acceptedFirstReads": [
+    "graphify-out/GRAPH_REPORT.md"
+  ],
+  "preferredFirstRead": "graphify-out/GRAPH_REPORT.md",
+  "expectedAnswerIncludes": [
+    "graph_report.md",
+    "graph may be stale",
+    "graphify update ."
+  ],
+  "files": [
+    {
+      "path": "graphify-out/GRAPH_REPORT.md",
+      "content": "# Graph Report\n\n## God Nodes\n- AuthRefreshCoordinator\n\n## Surprising Connections\n- AuthRefreshCoordinator links to BillingSyncWorker through retry-and-refresh coupling\n\n## Suggested Questions\n- Which module owns refresh retry policy?\n"
+    },
+    {
+      "path": "graphify-out/needs_update",
+      "content": "docs or code changed after graph generation\n"
+    },
+    {
+      "path": "src/auth/refresh-loop.ts",
+      "content": "export function refreshLoop() { return 'retry-and-refresh'; }\n"
+    }
+  ]
+}

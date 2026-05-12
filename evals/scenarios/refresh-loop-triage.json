@@ -1,0 +1,39 @@
+{
+  "id": "refresh-loop-triage",
+  "description": "A realistic debugging scenario: the agent should inspect the graph report first, then open the specific refresh-loop implementation file identified by the graph coupling.",
+  "prompt": "Billing sync retries are spiking during token refresh. Use tools. First inspect the graph artifact, then actually read the one implementation file you would inspect next and explain the specific component coupling that makes it the right place. Mention the first artifact inspected and the next file path.",
+  "acceptedFirstReads": [
+    "graphify-out/GRAPH_REPORT.md"
+  ],
+  "preferredFirstRead": "graphify-out/GRAPH_REPORT.md",
+  "requiredRawReadsAfterGraph": [
+    "src/auth/refresh-loop.ts"
+  ],
+  "expectedAnswerIncludes": [
+    "graph_report.md",
+    "src/auth/refresh-loop.ts",
+    "billingsyncworker"
+  ],
+  "files": [
+    {
+      "path": "graphify-out/GRAPH_REPORT.md",
+      "content": "# Graph Report\n\n## God Nodes\n- AuthRefreshCoordinator (`src/auth/refresh-loop.ts`)\n- BillingSyncWorker (`src/billing/billing-sync-worker.ts`)\n- CacheStore (`src/cache/token-cache.ts`)\n\n## Surprising Connections\n- AuthRefreshCoordinator links to BillingSyncWorker through shared retry-and-refresh flow\n- CacheStore participates in refresh token eviction after billing sync backoff\n\n## Suggested Questions\n- Why does AuthRefreshCoordinator call into BillingSyncWorker retry logic?\n- Exact coordinator implementation path: `src/auth/refresh-loop.ts`\n"
+    },
+    {
+      "path": "src/auth/refresh-loop.ts",
+      "content": "export class AuthRefreshCoordinator {\n  runRefreshLoop() {\n    return retryAndSyncBilling();\n  }\n}\n\nexport function retryAndSyncBilling() {\n  return 'billing-sync';\n}\n"
+    },
+    {
+      "path": "src/billing/billing-sync-worker.ts",
+      "content": "export class BillingSyncWorker {\n  scheduleBackoff() {\n    return 'backoff';\n  }\n}\n"
+    },
+    {
+      "path": "src/cache/token-cache.ts",
+      "content": "export function evictRefreshToken() {\n  return true;\n}\n"
+    },
+    {
+      "path": "src/auth/token-refresh.ts",
+      "content": "export function refreshToken() {\n  return 'token';\n}\n"
+    }
+  ]
+}

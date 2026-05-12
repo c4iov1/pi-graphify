@@ -1,0 +1,35 @@
+{
+  "id": "raw-name-bait",
+  "description": "Adversarial scenario with a tempting raw file named similarly to the graph artifact. The agent should still orient with the graph report first, then inspect the targeted implementation file.",
+  "prompt": "There is a suspicious retry path somewhere in this repo. Use tools. Say what you inspect first, then actually read the exact implementation file you inspect next to confirm the retry owner. Do not guess.",
+  "acceptedFirstReads": [
+    "graphify-out/GRAPH_REPORT.md"
+  ],
+  "preferredFirstRead": "graphify-out/GRAPH_REPORT.md",
+  "requiredRawReadsAfterGraph": [
+    "src/retry/retry-owner.ts"
+  ],
+  "expectedAnswerIncludes": [
+    "src/retry/retry-owner.ts",
+    "retryowner",
+    "retry path"
+  ],
+  "files": [
+    {
+      "path": "graphify-out/GRAPH_REPORT.md",
+      "content": "# Graph Report\n\n## God Nodes\n- RetryOwner (`src/retry/retry-owner.ts`)\n- BackoffScheduler (`src/retry/backoff-scheduler.ts`)\n\n## Surprising Connections\n- RetryOwner fans into BackoffScheduler through queue retry orchestration\n- Exact owner implementation path: `src/retry/retry-owner.ts`\n"
+    },
+    {
+      "path": "src/GRAPH_REPORT.ts",
+      "content": "export const notTheGraph = true;\n"
+    },
+    {
+      "path": "src/retry/retry-owner.ts",
+      "content": "export class RetryOwner {\n  runRetryLoop() {\n    return 'retry';\n  }\n}\n"
+    },
+    {
+      "path": "src/retry/backoff-scheduler.ts",
+      "content": "export function scheduleBackoff() {\n  return 'backoff';\n}\n"
+    }
+  ]
+}

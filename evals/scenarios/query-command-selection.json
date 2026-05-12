@@ -1,0 +1,28 @@
+{
+  "id": "query-command-selection",
+  "description": "For cross-module relationship questions, the agent should inspect the graph first and recommend graphify query/path/explain rather than raw grep.",
+  "prompt": "How should I investigate how AuthService relates to Database? You must use at least one tool before answering, mention the first artifact you inspected, and name the graphify command family you would use instead of grep.",
+  "acceptedFirstReads": [
+    "graphify-out/graph.json"
+  ],
+  "preferredFirstRead": "graphify-out/graph.json",
+  "expectedAnswerIncludes": [
+    "graph.json",
+    "graphify query",
+    "graphify path"
+  ],
+  "files": [
+    {
+      "path": "graphify-out/graph.json",
+      "content": "{\"directed\": false, \"multigraph\": false, \"graph\": {}, \"nodes\": [{\"id\": \"auth_service\", \"label\": \"AuthService\", \"source_file\": \"src/auth.ts\"}, {\"id\": \"database\", \"label\": \"Database\", \"source_file\": \"src/db.ts\"}], \"links\": [{\"source\": \"auth_service\", \"target\": \"database\", \"relation\": \"reads_from\", \"confidence\": \"EXTRACTED\", \"source_file\": \"src/auth.ts\"}]}\n"
+    },
+    {
+      "path": "src/auth.ts",
+      "content": "export class AuthService { constructor(private db: Database) {} }\n"
+    },
+    {
+      "path": "src/db.ts",
+      "content": "export class Database {}\n"
+    }
+  ]
+}

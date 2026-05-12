@@ -1,0 +1,31 @@
+{
+  "id": "graph-json-bridge",
+  "description": "Fallback scenario when only graph.json exists: the agent should inspect graph.json first, then open the raw confirmation file suggested by the bridge node.",
+  "prompt": "Only the graph JSON is available here. Use tools. Which node bridges AuthService to CacheStore, and what raw file should you inspect next to confirm it? Actually read that raw file before answering, and mention the first artifact inspected.",
+  "acceptedFirstReads": [
+    "graphify-out/graph.json"
+  ],
+  "preferredFirstRead": "graphify-out/graph.json",
+  "requiredRawReadsAfterGraph": [
+    "src/auth/token-bridge.ts"
+  ],
+  "expectedAnswerIncludes": [
+    "tokenbridge",
+    "graph.json",
+    "src/auth/token-bridge.ts"
+  ],
+  "files": [
+    {
+      "path": "graphify-out/graph.json",
+      "content": "{\n  \"nodes\": [\n    { \"id\": \"AuthService\", \"label\": \"AuthService\", \"kind\": \"service\" },\n    { \"id\": \"TokenBridge\", \"label\": \"TokenBridge\", \"kind\": \"bridge\", \"source_file\": \"src/auth/token-bridge.ts\" },\n    { \"id\": \"CacheStore\", \"label\": \"CacheStore\", \"kind\": \"store\" }\n  ],\n  \"edges\": [\n    { \"source\": \"AuthService\", \"target\": \"TokenBridge\", \"type\": \"calls\" },\n    { \"source\": \"TokenBridge\", \"target\": \"CacheStore\", \"type\": \"writes_to\" }\n  ]\n}\n"
+    },
+    {
+      "path": "src/auth/token-bridge.ts",
+      "content": "export function TokenBridge() {\n  return 'cache-write';\n}\n"
+    },
+    {
+      "path": "src/cache/cache-store.ts",
+      "content": "export function writeCache() {\n  return true;\n}\n"
+    }
+  ]
+}

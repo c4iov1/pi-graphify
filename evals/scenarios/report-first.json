@@ -1,0 +1,32 @@
+{
+  "id": "report-first",
+  "description": "When a graph report exists, the first decisive repo-inspection action should be a graph artifact read, not a raw source read/search.",
+  "prompt": "What are the exact God Nodes listed for this project? You must use at least one tool before answering, and you must mention the first artifact you inspected.",
+  "acceptedFirstReads": [
+    "graphify-out/GRAPH_REPORT.md"
+  ],
+  "preferredFirstRead": "graphify-out/GRAPH_REPORT.md",
+  "expectedAnswerIncludes": [
+    "authservice",
+    "graphbuilder",
+    "graph_report.md"
+  ],
+  "files": [
+    {
+      "path": "graphify-out/GRAPH_REPORT.md",
+      "content": "# Graph Report\n\n## God Nodes\n- AuthService\n- GraphBuilder\n\n## Surprising Connections\n- AuthService links to BillingSync through shared token refresh flow\n\n## Suggested Questions\n- Why does GraphBuilder depend on CacheStore?\n"
+    },
+    {
+      "path": "src/auth.ts",
+      "content": "export function refreshToken() { return 'token'; }\n"
+    },
+    {
+      "path": "src/graph.ts",
+      "content": "export function buildGraph() { return []; }\n"
+    },
+    {
+      "path": "src/billing.ts",
+      "content": "export function syncBilling() { return true; }\n"
+    }
+  ]
+}

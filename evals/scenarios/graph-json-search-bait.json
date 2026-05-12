@@ -1,0 +1,35 @@
+{
+  "id": "graph-json-search-bait",
+  "description": "Adversarial graph.json-only scenario with tempting similarly named raw files. The agent should inspect graph.json first and then the specific bridge implementation file.",
+  "prompt": "Auth cache invalidation is misfiring. Only graph JSON is available. Use tools. Identify the bridge node between AuthService and CacheStore, then actually read the exact raw file you would use to confirm it. Mention the first artifact inspected.",
+  "acceptedFirstReads": [
+    "graphify-out/graph.json"
+  ],
+  "preferredFirstRead": "graphify-out/graph.json",
+  "requiredRawReadsAfterGraph": [
+    "src/auth/cache-bridge.ts"
+  ],
+  "expectedAnswerIncludes": [
+    "cachebridge",
+    "graph.json",
+    "src/auth/cache-bridge.ts"
+  ],
+  "files": [
+    {
+      "path": "graphify-out/graph.json",
+      "content": "{\n  \"nodes\": [\n    { \"id\": \"AuthService\", \"label\": \"AuthService\" },\n    { \"id\": \"CacheBridge\", \"label\": \"CacheBridge\", \"source_file\": \"src/auth/cache-bridge.ts\" },\n    { \"id\": \"CacheStore\", \"label\": \"CacheStore\" }\n  ],\n  \"edges\": [\n    { \"source\": \"AuthService\", \"target\": \"CacheBridge\", \"type\": \"calls\" },\n    { \"source\": \"CacheBridge\", \"target\": \"CacheStore\", \"type\": \"writes_to\" }\n  ]\n}\n"
+    },
+    {
+      "path": "src/auth/cache-bridge.ts",
+      "content": "export function CacheBridge() {\n  return 'cache-bridge';\n}\n"
+    },
+    {
+      "path": "src/auth/cache.ts",
+      "content": "export function touchCache() {\n  return true;\n}\n"
+    },
+    {
+      "path": "src/auth/bridge.ts",
+      "content": "export function bridgeSomethingElse() {\n  return false;\n}\n"
+    }
+  ]
+}

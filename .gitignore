@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+
+# Build output / caches
+build/
+dist/
+coverage/
+.cache/
+.turbo/
+*.tsbuildinfo
+*.tgz
+
+# Local environment
+.env
+.env.*
+!.env.example
+!.env.sample
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Eval outputs
+evals/results/
+
+# Editor / OS clutter
+.DS_Store
+.vscode/
+.idea/
+
+# graphify-generated artifacts
+graphify-out/
+.graphify/
+.graphify_*.json
+.graphify_python
+
+# Local helper/reference checkout
+upstream-graphify/
+
+# Local agent/workflow state
+.oh-my-opencode-pi-workflow.json
+.oh-my-opencode-pi-stats.json
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
