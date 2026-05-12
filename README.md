@@ -1,6 +1,6 @@
 # pi-graphify
 
-**Knowledge graphs, always-on for pi coding agents.**
+**Knowledge graphs, always-on for pi coding agents (graphify 0.7.x ready).**
 
 `pi-graphify` is a Pi extension and skill package that brings knowledge-graph-first reasoning into [pi](https://github.com/earendil-works/pi) coding sessions. It wraps [graphify](https://github.com/safishamsi/graphify) — a Python knowledge graph engine — making graph awareness an automatic part of every agent turn.
 
@@ -53,6 +53,7 @@ The status indicator in pi's UI shows:
 | Wiki + report available | `graphify active · wiki + report available` |
 | Report only | `graphify active · report available` |
 | graph.json only | `graphify active · graph available` |
+| Callflow available | `graphify active · report · callflow available` |
 | Stale (needs_update) | `graphify active · report available · update recommended` |
 
 ### The skill (`skills/graphify/SKILL.md`)
@@ -80,10 +81,11 @@ A comprehensive Agent Skill that documents build, update, query, path, explain, 
 
 1. The agent reads `graphify-out/wiki/index.md` first (if present) — it's crawlable and structured
 2. Falls back to `graphify-out/GRAPH_REPORT.md` for god nodes and community structure
-3. Falls back to `graphify-out/graph.json` when nothing else exists
-4. Uses graph edges to pick one targeted raw file — never invents paths from labels
-5. For "how does X relate to Y" questions, runs `graphify query` / `graphify path` / `graphify explain` instead of grep
-6. If code changed during the session, recommends `graphify update .` before trusting graph answers about modified areas
+3. Falls back to `graphify-out/<project>-callflow.html` (0.7.13+) for Mermaid call-flow diagrams grouped by community
+4. Falls back to `graphify-out/graph.json` when nothing else exists
+5. Uses graph edges to pick one targeted raw file — never invents paths from labels
+6. For "how does X relate to Y" questions, runs `graphify query` / `graphify path` / `graphify explain` instead of grep
+7. If code changed during the session, recommends `graphify update .` before trusting graph answers about modified areas
 
 ## CLI quick reference
 
@@ -91,15 +93,19 @@ A comprehensive Agent Skill that documents build, update, query, path, explain, 
 |---|---|
 | `graphify .` | Build graph for current directory |
 | `graphify update .` | Safe incremental update after edits |
+| `graphify extract <path>` | Headless LLM extraction for CI (0.7.3+) |
+| `graphify export callflow-html` | Generate architecture call-flow HTML (0.7.13+) |
 | `graphify query` | Natural-language query against the graph |
 | `graphify path` | Find shortest paths between nodes |
 | `graphify explain` | Explain a specific node's role |
 | `graphify clone` | Clone a remote repo and build its graph |
 | `graphify merge-graphs` | Merge graphs from multiple repos |
+| `graphify global` | Cross-project global graph (0.7.7+) |
 | `graphify watch` | Auto-rebuild on file changes |
 | `graphify add` | Ingest external content (URLs, docs, media) |
 | `graphify serve` | Start an MCP server for repeated queries |
 | `graphify hook` | Install git hooks for auto-refresh |
+| `graphify uninstall` | Remove graphify from all platforms (0.7.11+) |
 
 See the **[full command guide](docs/COMMAND_GUIDE.md)** for detailed usage, flags, and examples.
 

@@ -3,17 +3,23 @@ import * as path from "node:path";
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 
 // ─── Constants ───────────────────────────────────────────────
-const OUTPUT_FOLDER = "graphify-out";
+const OUTPUT_FOLDER = process.env.GRAPHIFY_OUT || "graphify-out";
 const FLAG_NEEDS_UPDATE = path.join(OUTPUT_FOLDER, "needs_update");
 const FILE_GRAPH = path.join(OUTPUT_FOLDER, "graph.json");
 const FILE_WIKI = path.join(OUTPUT_FOLDER, "wiki", "index.md");
 const FILE_REPORT = path.join(OUTPUT_FOLDER, "GRAPH_REPORT.md");
+// Callflow HTML auto-detected via detectCallflow()
 
 const CODE_EXTENSIONS = new Set([
   ".c", ".cc", ".cpp", ".cs", ".dart", ".ex", ".exs", ".go",
-  ".java", ".jl", ".js", ".jsx", ".kt", ".kts", ".lua", ".m",
-  ".mjs", ".mm", ".php", ".ps1", ".py", ".rb", ".rs", ".scala",
-  ".sv", ".swift", ".ts", ".tsx", ".v", ".vue", ".zig",
+  ".java", ".jl", ".js", ".jsx", ".kt", ".kts", ".lua", ".luau",
+  ".m", ".mjs", ".mm", ".php", ".ps1", ".py", ".r", ".rb", ".rs",
+  ".scala", ".sql", ".sv", ".swift", ".svelte", ".ts", ".tsx", ".v", ".vue", ".zig",
+  // 0.7.x additions
+  ".groovy", ".gradle",        // Groovy/Spock (0.7.8)
+  ".f", ".f90", ".f95", ".f03", ".f08",  // Fortran (0.7.2)
+  ".pas", ".pp", ".dpr", ".dpk", ".lpr", ".inc", ".dfm", ".lfm", ".lpk", // Pascal/Delphi (0.7.12)
+  ".qmd",                      // Quarto (0.7.9)
 ]);
 
 // ─── Types ───────────────────────────────────────────────────
@@ -22,10 +28,12 @@ interface ArtifactSnapshot {
   reportExists: boolean;
   wikiExists: boolean;
   needsUpdateExists: boolean;
+  callflowExists: boolean;
   reportLocation: string;
   wikiLocation: string;
   graphLocation: string;
   needsUpdateLocation: string;
+  callflowLocation: string;
 }
 
 interface WeavePayload {
@@ -50,15 +58,22 @@ function normalizePath(raw?: string): string {
 
 function isInsideOutputDir(candidate?: string): boolean {
   if (!candidate) return false;
-  return normalizePath(candidate).replace(/\\/g, "/").includes("graphify-out/");
+  const prefix = OUTPUT_FOLDER.replace(/\\/g, "/") + "/";
+  return normalizePath(candidate).replace(/\\/g, "/").includes(prefix);
 }
 
 function matchesGraphArtifact(candidate?: string): boolean {
   const cleaned = normalizePath(candidate).replace(/\\/g, "/");
+  const dir = OUTPUT_FOLDER.replace(/\\/g, "/") + "/";
   return (
-    cleaned.includes("graphify-out/GRAPH_REPORT.md") ||
-    cleaned.includes("graphify-out/wiki/index.md") ||
-    cleaned.includes("graphify-out/graph.json")
+    cleaned.includes(dir + "GRAPH_REPORT.md") ||
+    cleaned.includes(dir + "wiki/index.md") ||
+    cleaned.includes(dir + "graph.json") ||
+    cleaned.includes(dir + "needs_update") ||
+    // 0.7.x: callflow HTML
+    new RegExp(
+      dir.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "[^/]+-callflow\\.html$"
+    ).test(cleaned)
   );
 }
 
@@ -69,11 +84,15 @@ function isDiscoveryCommand(cmd?: string): boolean {
 
 function isRebuildTrigger(cmd?: string): boolean {
   if (!cmd) return false;
+  // Commands that rebuild the graph (update AST/cache)
+  // NOT included: export, global, uninstall, --version, --help, hook-check, serve
   return (
-    /(^|\s)graphify\s+(update|watch|cluster-only)\b/.test(cmd) ||
+    /(^|\s)graphify\s+(update|watch|cluster-only|extract)\b/.test(cmd) ||
     cmd.includes("from graphify.watch import _rebuild_code") ||
     cmd.includes("python -m graphify.watch") ||
-    cmd.includes("python3 -m graphify.watch")
+    cmd.includes("python3 -m graphify.watch") ||
+    cmd.includes("python -m graphify.extract") ||
+    cmd.includes("python3 -m graphify.extract")
   );
 }
 
@@ -118,21 +137,42 @@ function injectNote(blocks: WeavePayload[], note: string): WeavePayload[] {
   return cloned;
 }
 
+function detectCallflow(root: string): { exists: boolean; location: string } {
+  // Callflow HTML: graphify-out/<project>-callflow.html
+  // We glob for any *callflow.html in the output dir
+  try {
+    const dir = path.join(root, OUTPUT_FOLDER);
+    if (!fileExists(dir)) return { exists: false, location: "" };
+    const entries = fs.readdirSync(dir);
+    for (const entry of entries) {
+      if (entry.endsWith("-callflow.html")) {
+        return { exists: true, location: path.join(dir, entry) };
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return { exists: false, location: "" };
+}
+
 function snapshotArtifacts(root: string): ArtifactSnapshot {
   const reportLoc = path.join(root, FILE_REPORT);
   const wikiLoc = path.join(root, FILE_WIKI);
   const graphLoc = path.join(root, FILE_GRAPH);
   const needsUpdateLoc = path.join(root, FLAG_NEEDS_UPDATE);
+  const callflow = detectCallflow(root);
 
   return {
     graphExists: fileExists(graphLoc) || fileExists(reportLoc),
     reportExists: fileExists(reportLoc),
     wikiExists: fileExists(wikiLoc),
     needsUpdateExists: fileExists(needsUpdateLoc),
+    callflowExists: callflow.exists,
     reportLocation: reportLoc,
     wikiLocation: wikiLoc,
     graphLocation: graphLoc,
     needsUpdateLocation: needsUpdateLoc,
+    callflowLocation: callflow.location,
   };
 }
 
@@ -169,11 +209,12 @@ export default function createGraphifyExtension(pi: ExtensionAPI) {
       return;
     }
 
-    const label = snapshot.wikiExists
-      ? "wiki + report"
-      : snapshot.reportExists
-        ? "report"
-        : "graph";
+    const parts: string[] = [];
+    if (snapshot.wikiExists) parts.push("wiki + report");
+    else if (snapshot.reportExists) parts.push("report");
+    else parts.push("graph");
+    if (snapshot.callflowExists) parts.push("callflow");
+    const label = parts.join(" · ");
 
     const warning = stalenessNote()
       ? " · update recommended"
@@ -237,6 +278,13 @@ export default function createGraphifyExtension(pi: ExtensionAPI) {
       "- Never invent a source path from a component name. If the graph artifact gives an exact path, use that exact path. If it does not, do one narrow lookup to find the existing path and then read it before answering.",
       "- After you have inspected a graph artifact this turn, do not go back and re-orient with broad raw searches unless the graph artifacts were insufficient.",
       `- If ${FLAG_NEEDS_UPDATE} exists or code files changed in this session, tell the user the graph may be stale and run \`graphify update .\` before relying on modified areas.`,
+      "",
+      "New in 0.7.x:",
+      "- `graphify extract <path>` — headless LLM extraction for CI (no IDE needed). Costs API credits on paid backends.",
+      "- `graphify export callflow-html` — generates a Mermaid architecture/call-flow HTML page from the graph.",
+      "- `graphify global add/remove/list/path` — cross-project global graph in ~/.graphify/global.json.",
+      "- Callflow HTML auto-regenerates on every `graphify watch` rebuild and post-commit hook if the file already exists.",
+      "- `graphify uninstall [--purge]` — remove graphify from all platforms.",
     ].join("\n");
 
     return {
