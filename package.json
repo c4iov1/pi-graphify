@@ -43,10 +43,10 @@
     "pack:check": "npm pack --dry-run"
   },
   "peerDependencies": {
-    "@mariozechner/pi-coding-agent": "*"
+    "@earendil-works/pi-coding-agent": "*"
   },
   "devDependencies": {
-    "@mariozechner/pi-coding-agent": "0.68.1"
+    "@earendil-works/pi-coding-agent": "0.68.1"
   },
   "pi": {
     "extensions": [
