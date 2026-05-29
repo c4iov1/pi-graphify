@@ -14,6 +14,25 @@ Requires graphify >= 0.7 (`graphify` CLI). Compatible with 0.5.x and 0.6.x for b
 
 ---
 
+## Proactive discovery
+
+The pi extension injects a compact discovery hint into every session's system prompt, even when no graph exists yet. This ensures agents know to check for `graphify-out/` before broad raw search when handling:
+
+- Architecture questions
+- Refactoring tasks
+- Dependency analysis
+- Code ownership questions
+- Large-codebase analysis
+
+If `graphify-out/` is found, the agent should prefer:
+1. `graphify-out/wiki/index.md` — structured navigation
+2. `graphify-out/GRAPH_REPORT.md` — god nodes and community structure
+3. `graphify query`, `graphify path`, `graphify explain` — graph traversal
+
+This happens automatically via the `before_agent_start` hook — no user action required.
+
+---
+
 ## Core honesty rules
 
 - Do not dump the full `graph.json` unless it is small and genuinely required.

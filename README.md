@@ -40,10 +40,12 @@ The extension hooks into pi's lifecycle to make graph awareness automatic:
 
 | Hook | What it does |
 | --- | --- |
-| `before_agent_start` | Injects graph-first rules into the system prompt |
+| `before_agent_start` | Injects graph-first rules into the system prompt; injects proactive discovery hint when no graph exists |
 | `tool_result` | Reminds the agent before raw reads/search; detects code edits to flag staleness |
 | `turn_start` | Resets per-turn reminder state to prevent spamming |
 | `session_start` | Refreshes graph state and sets the UI status indicator |
+
+**Proactive discovery:** Even when no graph exists yet, the extension injects a compact hint telling the agent to check for `graphify-out/` before broad raw search when handling architecture, refactoring, dependency, ownership, or large-codebase questions. This ensures graph awareness without requiring manual setup.
 
 The status indicator in pi's UI shows:
 

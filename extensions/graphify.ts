@@ -260,7 +260,23 @@ export default function createGraphifyExtension(pi: ExtensionAPI) {
   // ── Event: before_agent_start ──
   pi.on("before_agent_start", async (evt, ctx) => {
     snapshot = snapshotArtifacts(ctx.cwd);
-    if (!snapshot.graphExists) return;
+    
+    if (!snapshot.graphExists) {
+      // Proactive discovery: compact hint for when no graph exists yet
+      const discovery = [
+        "## graphify discovery",
+        "",
+        "For architecture, refactoring, dependency, ownership, or large-codebase analysis questions, check whether `graphify-out/` exists before broad raw search.",
+        "If `graphify-out/` is found, prefer these before broad grep/find/raw reads:",
+        "- `graphify-out/wiki/index.md`",
+        "- `graphify-out/GRAPH_REPORT.md`",
+        "- `graphify query`, `graphify path`, `graphify explain`",
+      ].join("\n");
+      
+      return {
+        systemPrompt: `${evt.systemPrompt}\n\n${discovery}`,
+      };
+    }
 
     const best = chooseArtifact(snapshot);
     const instructions = [

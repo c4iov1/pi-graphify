@@ -40,6 +40,9 @@ graphify-out/
 # Local helper/reference checkout
 upstream-graphify/
 
+# Pi agent state
+.pi/
+
 # Local agent/workflow state
 .oh-my-opencode-pi-workflow.json
 .oh-my-opencode-pi-stats.json

@@ -345,3 +345,49 @@ test("agent eval: busy /graphify command queues a follow-up", async () => {
     level: "info",
   });
 });
+
+test("agent eval: proactive discovery injected when no graph exists", async () => {
+  const cwd = makeProject();
+  const { call } = mountExtension(cwd);
+
+  const result = await call("before_agent_start", { systemPrompt: "BASE" });
+
+  assert.ok(result?.systemPrompt);
+  assert.match(result.systemPrompt, /graphify discovery/);
+  assert.match(result.systemPrompt, /architecture/);
+  assert.match(result.systemPrompt, /refactoring/);
+  assert.match(result.systemPrompt, /dependency/);
+  assert.match(result.systemPrompt, /ownership/);
+  assert.match(result.systemPrompt, /large-codebase/);
+  assert.match(result.systemPrompt, /graphify-out\//);
+  assert.match(result.systemPrompt, /wiki\/index\.md/);
+  assert.match(result.systemPrompt, /GRAPH_REPORT\.md/);
+  assert.match(result.systemPrompt, /graphify query/);
+  assert.match(result.systemPrompt, /graphify path/);
+  assert.match(result.systemPrompt, /graphify explain/);
+});
+
+test("agent eval: proactive discovery does not claim graph exists when it doesn't", async () => {
+  const cwd = makeProject();
+  const { call } = mountExtension(cwd);
+
+  const result = await call("before_agent_start", { systemPrompt: "BASE" });
+
+  assert.ok(result?.systemPrompt);
+  assert.doesNotMatch(result.systemPrompt, /This project has a graphify knowledge graph/);
+});
+
+test("agent eval: no tool_result reminders when no graph exists", async () => {
+  const cwd = makeProject();
+  const { call } = mountExtension(cwd);
+
+  await call("session_start");
+  await call("turn_start");
+  const result = await call("tool_result", {
+    toolName: "read",
+    input: { path: "src/index.ts" },
+    content: [{ type: "text", text: "file contents" }],
+  });
+
+  assert.equal(result, undefined);
+});
